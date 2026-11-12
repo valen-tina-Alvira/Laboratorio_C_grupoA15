@@ -1,5 +1,5 @@
 
-ifndef ARTEMIS_H                   /* Si ARTEMIS_H no esta definido todavia, incluye este archivo */
+#ifndef ARTEMIS_H                  /* Si ARTEMIS_H no esta definido todavia, incluye este archivo */
 #define ARTEMIS_H                   /* Lo define para que el archivo no se incluya dos veces (guard) */
 
 /* =========================================================================

@@ -2,6 +2,7 @@
 #include <string.h>     /* Para memset (poner una estructura en cero) */
 #include <math.h>       /* Para sqrt (raiz cuadrada) */
 #include "artemis.h"    /* Constantes, estructuras y prototipos del modulo */
+#include "validaciones.h"   /* Para usar las lecturas seguras por teclado */
 
 /* Convierte el codigo del estado orbital en su texto. static: solo se usa en este archivo */
 static const char *texto_estado(EstadoOrbital estado)
@@ -30,6 +31,38 @@ void cargar_parametros_estandar(SistemaOrbital *sistema)
     sistema->cantidad_vueltas = VUELTAS_DEF;            /* Vueltas por defecto: 1 */
     sistema->aceleracion_lateral = ACEL_PULSO_DEF;      /* Aceleracion lateral predefinida: 0.5 m/s^2 */
     sistema->tiempo_aceleracion = TIEMPO_PULSO_DEF;     /* Duracion del pulso predefinida: 10 s */
+}
+
+/* Modo personalizado: el usuario modifica masa, altura, vueltas y pulso lateral */
+void configurar_simulacion_personalizada(SistemaOrbital *sistema)
+{
+    cargar_parametros_estandar(sistema);    /* Parte de los valores predefinidos y limpia el resto de los campos */
+
+    printf("\n   --- Simulacion personalizada ---\n");   /* Titulo de la pantalla */
+
+    printf("   Masa de la nave Mn [%.0f - %.0f] kg: ", MASA_NAVE_MIN, MASA_NAVE_MAX);   /* Pide la masa indicando el rango */
+    sistema->masa_nave = leer_double_rango(MASA_NAVE_MIN, MASA_NAVE_MAX);              /* Guarda la masa validada */
+
+    printf("   Altura orbital h [%.0f - %.0f] m: ", ALTURA_MIN, ALTURA_MAX);            /* Pide la altura indicando el rango */
+    sistema->altura_orbita = leer_double_rango(ALTURA_MIN, ALTURA_MAX);                /* Guarda la altura validada */
+
+    printf("   Cantidad de vueltas [%d - %d]: ", VUELTAS_MIN, VUELTAS_MAX);             /* Pide las vueltas indicando el rango */
+    sistema->cantidad_vueltas = leer_entero_rango(VUELTAS_MIN, VUELTAS_MAX);           /* Guarda las vueltas validadas */
+
+    leer_pulso_lateral(&sistema->aceleracion_lateral,   /* Pide a y t con la regla combinada; pasa la direccion de cada campo */
+                       &sistema->tiempo_aceleracion,    /* para que la funcion los complete directamente en la estructura */
+                       ACEL_LAT_MAX, TIEMPO_LAT_MAX);   /* Limites superiores permitidos */
+}
+
+/* Modo prueba de estabilidad: el usuario ingresa solo la velocidad inicial */
+void configurar_prueba_estabilidad(SistemaOrbital *sistema)
+{
+    cargar_parametros_estandar(sistema);    /* Usa los valores predefinidos para todo lo demas */
+
+    printf("\n   --- Prueba de estabilidad ---\n");   /* Titulo de la pantalla */
+    printf("   Se usan: h = %.0f m y Mn = %.0f kg.\n", ALTURA_ORBITA_DEF, MASA_NAVE_DEF);  /* Informa los datos fijos */
+    printf("   Velocidad inicial v [%.0f - %.0f] m/s: ", VEL_PRUEBA_MIN, VEL_PRUEBA_MAX);  /* Pide la velocidad indicando el rango */
+    sistema->velocidad_orbital = leer_double_rango(VEL_PRUEBA_MIN, VEL_PRUEBA_MAX);        /* Guarda la velocidad validada */
 }
 
 /* Calcula todas las magnitudes fisicas. Si usar_velocidad_manual es 1, respeta la velocidad que ya cargo el usuario */

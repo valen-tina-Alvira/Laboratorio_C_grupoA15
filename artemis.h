@@ -151,8 +151,8 @@ void calcular_magnitudes_orbitales(SistemaOrbital *sistema, int usar_velocidad_m
 void evaluar_estabilidad_orbital(SistemaOrbital *sistema);
 
 /* Ejecucion grafica y submodos de la Opcion 3 */
-void ejecutar_animacion_2d(SistemaOrbital *sistema);
-void ejecutar_demostraciones_conceptos(SistemaOrbital *sistema, HistorialSimulaciones *historial);
+//void ejecutar_animacion_2d(SistemaOrbital *sistema);
+//void ejecutar_demostraciones_conceptos(SistemaOrbital *sistema, HistorialSimulaciones *historial);
 
 /* Gestion de historial (desplazamiento i = i - 1 al superar 20) e informes */
 void guardar_en_historial(HistorialSimulaciones *historial, const SistemaOrbital *sistema, const char *modo);
@@ -162,5 +162,8 @@ void mostrar_historial_simulaciones(const HistorialSimulaciones *historial);
 void mostrar_encabezado_creditos(void);
 void mostrar_descripcion_artemis(void);
 void mostrar_descripcion_simulador(void);
+
+ /* Reporte final con los resultados de una simulacion */
+void mostrar_resultados_simulacion(const SistemaOrbital *sistema);
 
 #endif /* ARTEMIS_H */              /* Cierra el bloque del guard (obligatorio) */

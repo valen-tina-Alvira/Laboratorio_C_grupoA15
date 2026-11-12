@@ -125,3 +125,95 @@ void evaluar_estabilidad_orbital(SistemaOrbital *sistema)
     snprintf(sistema->resultado_texto, MAX_CADENA_ESTADO, "%s",
              texto_estado(sistema->resultado_codigo));  /* Copia el nombre del estado en el campo de texto, sin pasarse del tamano */
 }
+
+/* Muestra el reporte con los datos de entrada y los resultados de una simulacion */
+void mostrar_resultados_simulacion(const SistemaOrbital *sistema)
+{
+    printf("\n  ======================================================================\n"); 
+    printf("                       REPORTE DE LA SIMULACION\n");                               
+    printf("  ======================================================================\n");      
+
+    printf("   DATOS DE ENTRADA\n");                                                            
+    printf("   Masa de la nave Mn ........... %.2f kg\n", sistema->masa_nave);                  /* Masa ingresada o predefinida */
+    printf("   Altura orbital h ............. %.2f m\n", sistema->altura_orbita);               /* Altura sobre la superficie */
+    printf("   Vueltas a simular ............ %d\n", sistema->cantidad_vueltas);               /* Cantidad de vueltas */
+    printf("   Pulso lateral: a = %.2f m/s^2 durante t = %.2f s\n",
+           sistema->aceleracion_lateral, sistema->tiempo_aceleracion);                         /* Datos del propulsor auxiliar */
+
+    printf("\n   MAGNITUDES ORBITALES (MCU)\n");                                              
+    printf("   Radio orbital Ro = Rmt + h ... %.2f m\n", sistema->radio_orbital);              /* Radio desde el centro de la Tierra */
+    printf("   Velocidad orbital ideal ...... %.2f m/s\n", sistema->velocidad_ideal);          /* v = raiz(G*Mt/Ro) */
+    printf("   Velocidad de escape .......... %.2f m/s\n", sistema->velocidad_escape);         /* raiz(2) * v ideal */
+    printf("   Velocidad utilizada .......... %.2f m/s\n", sistema->velocidad_orbital);        /* Velocidad con la que se evaluo la orbita */
+    printf("   Fuerza gravitatoria Fg = Fc .. %.2f N\n", sistema->atraccion_gravitatoria);     /* Fg, que actua como fuerza centripeta */
+    printf("   Aceleracion centripeta ac .... %.4f m/s^2\n", sistema->aceleracion_centripeta); /* ac = v^2 / Ro */
+    printf("   Velocidad angular omega ...... %.6f rad/s\n", sistema->velocidad_angular);      /* omega = v / Ro */
+    printf("   Periodo orbital T ............ %.2f s (%.2f min)\n",
+           sistema->periodo_segundos, sistema->periodo_minutos);                               /* Tiempo de una vuelta completa */
+
+    printf("\n   MANIOBRA LATERAL\n");                                                          /* Subtitulo de la seccion */
+    printf("   Velocidad transversal ........ %.2f m/s\n", sistema->velocidad_lateral);        /* vlat = a * t */
+    printf("   Desviacion lateral ........... %.3f m\n", sistema->desviacion_lateral);         /* dy = 1/2 * a * t^2 */
+
+    printf("\n   RESULTADO: %s\n", sistema->resultado_texto);                                   /* Estable, Caida, Eliptica o Escape */
+    printf("  ======================================================================\n");     /* Linea de cierre */
+}
+
+/* Guarda una simulacion en el historial. Si ya hay 20, descarta la mas antigua */
+void guardar_en_historial(HistorialSimulaciones *historial, const SistemaOrbital *sistema, const char *modo)
+{
+    RegistroSimulacion *registro;   /* Puntero al registro donde se va a escribir */
+    int i;                          /* Indice para el desplazamiento */
+
+    if (historial->cantidad_simulaciones >= MAX_HISTORIAL) {        /* Si el historial esta lleno */
+        for (i = 1; i < MAX_HISTORIAL; i++) {                       /* Recorre desde el segundo registro hasta el ultimo */
+            historial->registros[i - 1] = historial->registros[i];  /* Copia cada registro a la posicion anterior (se pierde el mas antiguo) */
+        }
+        historial->cantidad_simulaciones = MAX_HISTORIAL - 1;       /* Deja libre la ultima posicion */
+    }
+
+    registro = &historial->registros[historial->cantidad_simulaciones];   /* Apunta al primer lugar libre */
+    historial->total_ejecutadas++;                                  /* Suma una ejecucion al contador historico */
+
+    registro->id_simulacion = historial->total_ejecutadas;          /* El ID es el numero correlativo de ejecucion */
+    snprintf(registro->modo_simulacion, MAX_CADENA_ESTADO, "%s", modo);   /* Copia el nombre del modo sin pasarse del tamano */
+    registro->masa_nave = sistema->masa_nave;                       /* Guarda la masa */
+    registro->altura_orbita = sistema->altura_orbita;               /* Guarda la altura */
+    registro->velocidad_orbital = sistema->velocidad_orbital;       /* Guarda la velocidad utilizada */
+    registro->periodo_minutos = sistema->periodo_minutos;           /* Guarda el periodo en minutos */
+    registro->aceleracion_lateral = sistema->aceleracion_lateral;   /* Guarda la aceleracion lateral */
+    registro->tiempo_aceleracion = sistema->tiempo_aceleracion;     /* Guarda la duracion del pulso */
+    registro->desviacion_lateral = sistema->desviacion_lateral;     /* Guarda la desviacion lateral */
+    registro->cantidad_vueltas = sistema->cantidad_vueltas;         /* Guarda las vueltas */
+    snprintf(registro->resultado, MAX_CADENA_ESTADO, "%s", sistema->resultado_texto);   /* Guarda el texto del resultado */
+
+    historial->cantidad_simulaciones++;                             /* Ahora hay un registro mas ocupado */
+}
+
+/* Muestra el historial en forma de tabla */
+void mostrar_historial_simulaciones(const HistorialSimulaciones *historial)
+{
+    int i;                          /* Indice para recorrer los registros */
+
+    if (historial->cantidad_simulaciones == 0) {                    /* Si todavia no se ejecuto ninguna simulacion */
+        printf("   No hay simulaciones registradas todavia.\n");    /* Avisa que esta vacio */
+        return;                                                     /* Termina la funcion */
+    }
+
+    printf("   Simulaciones guardadas: %d de %d (ejecutadas en total: %d)\n\n",
+           historial->cantidad_simulaciones, MAX_HISTORIAL, historial->total_ejecutadas);   /* Resumen de los contadores */
+
+    printf("   %-3s %-13s %7s %8s %8s %7s %5s %5s %7s %3s %-9s\n",
+           "ID", "Modo", "Mn[kg]", "h[km]", "v[m/s]", "T[min]", "a", "t[s]", "dy[m]", "Vlt", "Resultado");   /* Encabezados de las columnas */
+    printf("   ------------------------------------------------------------------------------------\n");   /* Linea separadora */
+
+    for (i = 0; i < historial->cantidad_simulaciones; i++) {        /* Recorre solo los registros ocupados */
+        const RegistroSimulacion *r = &historial->registros[i];     /* Puntero de solo lectura al registro actual */
+        printf("   %-3d %-13s %7.0f %8.1f %8.1f %7.2f %5.2f %5.1f %7.2f %3d %-9s\n",
+               r->id_simulacion, r->modo_simulacion, r->masa_nave,
+               r->altura_orbita / 1000.0,                           /* La altura se muestra en km para ahorrar ancho */
+               r->velocidad_orbital, r->periodo_minutos, r->aceleracion_lateral,
+               r->tiempo_aceleracion, r->desviacion_lateral,
+               r->cantidad_vueltas, r->resultado);                  /* Una fila por simulacion */
+    }
+}

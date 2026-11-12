@@ -1,27 +1,118 @@
-#include <stdio.h>          /* Para printf, scanf y getchar */
-#include "validaciones.h"   /* Para que el .c coincida con los prototipos declarados */
+#include <stdio.h>          /* Para printf, fgets y getchar */
+#include <stdlib.h>         /* Para strtol, strtod, exit y EXIT_FAILURE */
+#include <string.h>         /* Para strlen y strchr */
+#include <errno.h>          /* Para errno y ERANGE (detectar numeros demasiado grandes) */
+#include <ctype.h>          /* Para isspace (saltar espacios al final) */
+#include "validaciones.h"   /* Para que este .c coincida con los prototipos declarados */
 
-void limpiar_buffer(void)   /* Funcion que vacia el buffer de entrada */
+#define TAM_LINEA 64        /* Tamano maximo del texto que se lee por teclado */
+
+void limpiar_buffer(void)   /* Vacia el buffer de entrada */
 {
     int c;                  /* int (no char) porque getchar() devuelve int y puede devolver EOF */
-    while ((c = getchar()) != '\n' && c != EOF);  /* Lee y descarta caracteres hasta el Enter o fin de entrada */
+    while ((c = getchar()) != '\n' && c != EOF);  /* Descarta caracteres hasta el Enter o el fin de entrada */
 }
 
-int leer_entero_rango(int min, int max)   /* Pide un entero y repite hasta que este en [min, max] */
+/* Lee una linea de texto. Devuelve 1 si entro completa y 0 si era demasiado larga */
+static int leer_linea(char *destino, int tam)   /* static: solo se usa dentro de este archivo */
 {
-    int valor;      /* Aqui scanf guarda el numero ingresado */
-    int leidos;     /* Cantidad de valores que scanf logro leer (1 si fue exitoso, 0 si no) */
+    size_t largo;           /* Longitud del texto leido */
 
-    while (1) {                              /* Bucle infinito: solo se sale con return */
-        leidos = scanf("%d", &valor);        /* Intenta leer un entero y guarda el resultado de la lectura */
-        limpiar_buffer();                    /* Descarta el resto de la linea (Enter o texto sobrante) */
+    if (fgets(destino, tam, stdin) == NULL) {   /* fgets devuelve NULL si se cerro la entrada (EOF) */
+        printf("\n   [ERROR] Se cerro la entrada de datos. Fin del programa.\n");  /* Avisa el motivo */
+        exit(EXIT_FAILURE); /* Termina el programa: sin entrada no se puede seguir pidiendo datos */
+    }
 
-        if (leidos != 1) {                   /* Si no se pudo leer un entero (ej: el usuario escribio letras) */
-            printf("   [ERROR] Entrada invalida. Ingrese un numero entero [%d-%d]: ", min, max);  /* Avisa del error */
-        } else if (valor < min || valor > max) {   /* Si leyo un entero pero esta fuera del rango permitido */
-            printf("   [ERROR] Fuera de rango. Ingrese un valor entre %d y %d: ", min, max);      /* Avisa del error */
-        } else {                             /* Si el valor es entero y esta dentro del rango */
-            return valor;                    /* Devuelve el valor valido y termina la funcion */
+    largo = strlen(destino);                    /* Calcula cuantos caracteres se leyeron */
+    if (largo > 0 && destino[largo - 1] == '\n') {   /* Si la linea termina en Enter, entro completa */
+        destino[largo - 1] = '\0';              /* Reemplaza el Enter por el fin de cadena */
+        return 1;                               /* Linea valida en cuanto a longitud */
+    }
+
+    limpiar_buffer();       /* La linea era mas larga que el arreglo: descarta lo que sobro */
+    return 0;               /* Avisa que la linea fue demasiado larga */
+}
+
+int leer_entero_rango(int min, int max)   /* Repite hasta obtener un entero dentro de [min, max] */
+{
+    char linea[TAM_LINEA];  /* Aqui se guarda el texto ingresado */
+    char *fin;              /* strtol deja aqui el puntero al primer caracter que no pudo convertir */
+    long valor;             /* Numero convertido (long para detectar desbordes antes de achicarlo a int) */
+
+    while (1) {             /* Bucle: solo se sale con return cuando el dato es valido */
+        if (!leer_linea(linea, TAM_LINEA)) {    /* Si el texto fue demasiado largo */
+            printf("   [ERROR] Entrada demasiado larga. Ingrese un numero entero [%d-%d]: ", min, max);
+            continue;       /* Vuelve a pedir el dato */
+        }
+
+        errno = 0;                          /* Borra errores previos para detectar los de strtol */
+        valor = strtol(linea, &fin, 10);    /* Convierte el texto a entero en base 10 */
+
+        while (isspace((unsigned char)*fin)) {  /* Mientras queden espacios al final del texto */
+            fin++;                          /* Los salta (permite "5 " como valido) */
+        }
+
+        if (fin == linea || *fin != '\0') { /* Si no convirtio nada, o sobraron caracteres (ej: "12abc") */
+            printf("   [ERROR] Entrada invalida. Ingrese un numero entero [%d-%d]: ", min, max);
+        } else if (errno == ERANGE || valor < min || valor > max) {  /* Si es enorme o esta fuera del rango */
+            printf("   [ERROR] Fuera de rango. Ingrese un valor entre %d y %d: ", min, max);
+        } else {            /* Si es un entero completo y dentro del rango */
+            return (int)valor;              /* Devuelve el valor ya validado */
         }
     }
+}
+
+double leer_double_rango(double min, double max)   /* Repite hasta obtener un real dentro de [min, max] */
+{
+    char linea[TAM_LINEA];  /* Aqui se guarda el texto ingresado */
+    char *fin;              /* strtod deja aqui el puntero al primer caracter que no pudo convertir */
+    double valor;           /* Numero real convertido */
+
+    while (1) {             /* Bucle: solo se sale con return cuando el dato es valido */
+        if (!leer_linea(linea, TAM_LINEA)) {    /* Si el texto fue demasiado largo */
+            printf("   [ERROR] Entrada demasiado larga. Ingrese un numero [%.2f - %.2f]: ", min, max);
+            continue;       /* Vuelve a pedir el dato */
+        }
+
+        if (strchr(linea, ',') != NULL) {   /* Si el usuario escribio coma decimal */
+            printf("   [ERROR] Use punto como separador decimal (ej: 3.5). Reingrese [%.2f - %.2f]: ", min, max);
+            continue;       /* Vuelve a pedir el dato */
+        }
+
+        valor = strtod(linea, &fin);        /* Convierte el texto a numero real */
+
+        while (isspace((unsigned char)*fin)) {  /* Mientras queden espacios al final del texto */
+            fin++;                          /* Los salta */
+        }
+
+        if (fin == linea || *fin != '\0') { /* Si no convirtio nada, o sobraron caracteres (ej: "3.5x") */
+            printf("   [ERROR] Entrada invalida. Ingrese un numero [%.2f - %.2f]: ", min, max);
+        } else if (!(valor >= min && valor <= max)) {  /* Fuera de rango; tambien atrapa "nan", que falla toda comparacion */
+            printf("   [ERROR] Fuera de rango. Ingrese un valor entre %.2f y %.2f: ", min, max);
+        } else {            /* Si es un real completo y dentro del rango */
+            return valor;                   /* Devuelve el valor ya validado */
+        }
+    }
+}
+
+/* Pide aceleracion a y duracion t. Regla: si a = 0, t se asigna a 0; si a > 0, t debe ser > 0 */
+void leer_pulso_lateral(double *aceleracion, double *tiempo,
+                        double aceleracion_max, double tiempo_max)
+{
+    printf("   Aceleracion lateral a [0 - %.2f] m/s^2: ", aceleracion_max);  /* Pide la aceleracion */
+    *aceleracion = leer_double_rango(0.0, aceleracion_max);   /* Guarda el valor validado en la variable del que llama */
+
+    if (*aceleracion == 0.0) {      /* Si no hay propulsion lateral */
+        *tiempo = 0.0;              /* El tiempo se asigna a 0 automaticamente */
+        printf("   Aceleracion nula: la duracion del pulso se asigna a 0 s.\n");  /* Informa al usuario */
+        return;                     /* No hace falta pedir la duracion */
+    }
+
+    do {                            /* Si a > 0, repite hasta que t sea mayor que 0 */
+        printf("   Duracion del pulso t (0 - %.2f] s: ", tiempo_max);   /* Pide la duracion */
+        *tiempo = leer_double_rango(0.0, tiempo_max);   /* Valida el rango [0, tiempo_max] */
+        if (*tiempo <= 0.0) {       /* t = 0 no es valido cuando hay aceleracion */
+            printf("   [ERROR] Con aceleracion mayor que 0, la duracion debe ser mayor que 0.\n");
+        }
+    } while (*tiempo <= 0.0);       /* Vuelve a pedir mientras t no sea positivo */
 }

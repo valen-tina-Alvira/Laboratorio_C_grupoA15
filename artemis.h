@@ -62,6 +62,7 @@
 
 #define MAX_HISTORIAL 20            /* Capacidad maxima del arreglo de simulaciones */
 #define MAX_TIEMPO_ANIMACION 60.0   /* Duracion maxima en tiempo real de la animacion (s) */
+#define FRAME_MS 80                 /* Milisegundos entre cuadros de la animacion (80 ms = 12 cuadros por segundo) */
 #define MAX_CADENA_ESTADO 32        /* Longitud maxima para textos de estado y modo */
 
 /* =========================================================================
@@ -151,7 +152,7 @@ void calcular_magnitudes_orbitales(SistemaOrbital *sistema, int usar_velocidad_m
 void evaluar_estabilidad_orbital(SistemaOrbital *sistema);
 
 /* Ejecucion grafica y submodos de la Opcion 3 */
-//void ejecutar_animacion_2d(SistemaOrbital *sistema);
+void ejecutar_animacion_2d(SistemaOrbital *sistema);
 void ejecutar_demostraciones_conceptos(SistemaOrbital *sistema, HistorialSimulaciones *historial);
 
 /* Gestion de historial (desplazamiento i = i - 1 al superar 20) e informes */
@@ -164,6 +165,6 @@ void mostrar_descripcion_artemis(void);
 void mostrar_descripcion_simulador(void);
 
  /* Reporte final con los resultados de una simulacion */
-void mostrar_resultados_simulacion(const SistemaOrbital *sistema);
+void mostrar_resumen_simulacion(const SistemaOrbital *sistema);
 
 #endif /* ARTEMIS_H */              /* Cierra el bloque del guard (obligatorio) */

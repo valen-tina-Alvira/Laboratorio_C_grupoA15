@@ -145,7 +145,7 @@ int leer_si_no(void)        /* Repite hasta que el usuario responda S o N */
     }
 }
 
-void esperar_enter(void)    /* Pausa hasta que el usuario presione ENTER */
+void pausar_enter (void)    /* Pausa hasta que el usuario presione ENTER */
 {
     char linea[TAM_LINEA];  /* Aqui se guarda (y se descarta) lo que escriba el usuario */
 

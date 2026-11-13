@@ -4,6 +4,7 @@
 #include "artemis.h"    /* Constantes, estructuras y prototipos del modulo */
 #include "validaciones.h"   /* Para usar las lecturas seguras por teclado */
 #define GRAVEDAD_SUPERFICIE 9.80    /* g en la superficie terrestre (m/s^2), para comparar la aceleracion centripeta */
+
 /* Convierte el codigo del estado orbital en su texto. static: solo se usa en este archivo */
 static const char *texto_estado(EstadoOrbital estado)
 {
@@ -127,7 +128,7 @@ void evaluar_estabilidad_orbital(SistemaOrbital *sistema)
 }
 
 /* Muestra el reporte con los datos de entrada y los resultados de una simulacion */
-void mostrar_resultados_simulacion(const SistemaOrbital *sistema)
+void mostrar_resumen_simulacion(const SistemaOrbital *sistema)
 {
     printf("\n  ======================================================================\n"); 
     printf("                       REPORTE DE LA SIMULACION\n");                               
@@ -271,8 +272,8 @@ void mostrar_descripcion_simulador(void)
     /* Parrafo 3: como se clasifica el resultado, segun la velocidad v y la ideal vi */
     printf("   Clasificacion de la orbita segun la velocidad v (vi = ideal):\n");
     printf("    - Caida ..... v < vi - %.0f m/s\n", TOLERANCIA_VEL);
-    printf("    - Estable ... vi -/+ %.0f m/s\n", TOLERANCIA_VEL);
-    printf("    - Eliptica .. vi + %.0f m/s <= v < velocidad de escape\n", TOLERANCIA_VEL);
+    printf("    - Estable ... vi - %.0f <= v <= vi + %.0f m/s\n", TOLERANCIA_VEL, TOLERANCIA_VEL);   /* Rango estable, ambos bordes incluidos */
+    printf("    - Eliptica .. vi + %.0f < v < velocidad de escape\n", TOLERANCIA_VEL);               /* Desde justo por encima del limite superior */
     printf("    - Escape .... v >= velocidad de escape (raiz(2) * vi)\n");
     imprimir_separador();                                                                      /* Linea de cierre */
 }
@@ -382,7 +383,7 @@ void ejecutar_demostraciones_conceptos(SistemaOrbital *sistema, HistorialSimulac
     }
 
     calcular_magnitudes_orbitales(sistema, 0);              /* Calcula todas las magnitudes con la velocidad ideal */
-    /* ejecutar_animacion_2d(sistema); */                   /* Cuando exista la parte grafica, se ejecuta aca antes de los calculos */
+    ejecutar_animacion_2d(sistema);                   /* Cuando exista la parte grafica, se ejecuta aca antes de los calculos */
     guardar_en_historial(historial, sistema, "Demo");       /* Registra esta ejecucion en el historial */
 
     do {                                                    /* Repite el submenu hasta que elija volver */
@@ -405,7 +406,19 @@ void ejecutar_demostraciones_conceptos(SistemaOrbital *sistema, HistorialSimulac
 
         if (opcion != 5) {                                  /* Si mostro una respuesta */
             printf("\n  Presione ENTER para continuar...");      /* Pausa para poder leerla */
-            esperar_enter();                                /* Espera el Enter del usuario */
+            pausar_enter ();                                /* Espera el Enter del usuario */
         }
     } while (opcion != 5);                                  /* Termina al elegir volver */
+}
+/* Pantalla de presentacion que se muestra una sola vez al abrir el programa */
+void mostrar_encabezado_creditos(void)
+{
+    printf("\n");
+    printf("  ======================================================================\n");   
+    printf("                 ARTEMIS SIMULATOR (ORBITA TERRESTRE BAJA - LEO)\n");         
+    printf("  ======================================================================\n");   /* Linea decorativa inferior */
+    printf("   Desarrolladores: [Segovia, Sebastian] - [Alvira Coseres, Valentina] - [Alfonso, valentina] - [Saade, antonio]\n");  
+    printf("   UTN FRRe | Algoritmos y Estructuras de Datos | Ingenieria en Sistemas\n");   /* Datos de la catedra */
+    printf("   Situacion-Problema 2: Insercion y Estabilidad en Orbita LEO (MCU y Gravitacion)\n");   
+    printf("  ======================================================================\n\n"); 
 }

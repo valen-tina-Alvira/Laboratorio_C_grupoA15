@@ -7,6 +7,6 @@ double leer_double_rango(double min, double max);           /* Prototipo: pide u
 void leer_pulso_lateral(double *aceleracion, double *tiempo,
                         double aceleracion_max, double tiempo_max);  /* Prototipo: pide a y t con la regla combinada */
 int leer_si_no(void);                                       /* Prototipo: pide S o N. Devuelve 1 si es "si" y 0 si es "no" */
-void esperar_enter(void);                                   /* Prototipo: espera que el usuario presione ENTER */
+void pausar_enter (void);                                   /* Prototipo: espera que el usuario presione ENTER */
 
 #endif                   /* Cierra el bloque abierto por #ifndef */

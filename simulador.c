@@ -1,31 +1,27 @@
-/* =========================================================================
+/*
  * simulador.c - Modulo de actualizacion del estado del juego (animacion)
- * =========================================================================
+ * 
  * Este archivo completa el "Modulo de Lógica" del punto 5.1 junto con
  * artemis.c (que concentra los calculos fisicos y la logica de negocio):
  * aqui se actualiza el estado de la simulacion cuadro a cuadro.
  *
- * Contiene DOS implementaciones de ejecutar_animacion_2d():
+ * Contiene ejecutar_animacion_2d(): la animacion se muestra en una
+ * VENTANA GRAFICA usando la libreria raylib (libreria de graficos en C).
+ * Dibuja la Tierra, la orbita prevista, el rastro y la nave, con los
+ * datos de la simulacion en pantalla (HUD).
  *
- *   - Con USAR_RAYLIB definido: ventana grafica raylib (libreria de
- *     graficos en C). Dibuja la Tierra, la orbita, el rastro y la nave,
- *     con datos de la simulacion en pantalla (HUD).
- *
- *   - Sin USAR_RAYLIB: version de consola con la matriz 61 x 25 de
- *     caracteres (respaldo si la libreria no esta disponible).
- *
- * La fisica por cuadro es identica en ambas: la funcion fisica_cuadro()
- * avanza el modelo orbital segun el estado (estable, eliptica, caida o
- * escape) usando integracion numerica simple (metodo de Euler). */
+ * La fisica por cuadro la maneja fisica_cuadro(), que avanza el modelo
+ * orbital segun el estado (estable, eliptica, caida o escape) usando
+ * integracion numerica simple (metodo de Euler). */
 
-#include <stdio.h>      /* Para printf (version de consola) */
-#include <stdlib.h>     /* Para system (limpiar pantalla en consola) */
-#include <string.h>     /* Para memset (inicializar la matriz de consola) */
+#include <stdio.h>      /* Para snprintf (uso general del modulo) */
+#include <stdlib.h>     /* Para utilidades estandar */
+#include <string.h>     /* Para manejo de cadenas si es necesario */
 #include <math.h>       /* Para sqrt, cos, sin, fabs, round */
 #include "artemis.h"    /* Constantes, estructuras y prototipos */
 
 /* =========================================================================
- * FISICA COMUN POR CUADRO (la usan las dos versiones de la animacion)
+ * FISICA POR CUADRO (usada por la animacion grafica)
  * ========================================================================= */
 
 /* Avanza el modelo orbital un intervalo dt_sim segun el estado:
@@ -112,9 +108,8 @@ static void preparar_tiempo(const SistemaOrbital *sistema,
     *dt_sim = duracion_simulada / (double)(*frames_total);      /* Segundos simulados por cuadro */
 }
 
-/* Devuelve el color asociado a cada estado de la orbita (solo con raylib) */
-#ifdef USAR_RAYLIB
-#include "raylib.h"     /* Libreria de graficos: ventanas, dibujado 2D y texto */
+/* Devuelve el color asociado a cada estado de la orbita */
+#include "raylib.h"     /* Libreria de graficos: ventanas, dibujo 2D y texto */
 
 static Color color_estado(EstadoOrbital estado)
 {
@@ -127,7 +122,7 @@ static Color color_estado(EstadoOrbital estado)
     }
 }
 
-/* ================= VERSION CON VENTANA GRAFICA (RAYLIB) ================= */
+/* ================= VERSION DE LA ANIMACION (VENTANA GRAFICA RAYLIB) ================= */
 void ejecutar_animacion_2d(SistemaOrbital *sistema)
 {
     const int ancho_ventana = 900;              /* Ancho de la ventana en pixeles */
@@ -306,216 +301,3 @@ void ejecutar_animacion_2d(SistemaOrbital *sistema)
 
     CloseWindow();                                              /* Cierra la ventana grafica */
 }
-
-#else
-/* ==================== VERSION DE CONSOLA (RESPALDO) ===================== */
-
-/* Pauses de milisegundos y control del cursor solo en Windows/POSIX */
-#ifdef _WIN32
-#include <windows.h>    /* Para Sleep, SetConsoleCursorPosition y el cursor */
-#else
-#include <unistd.h>     /* Para usleep */
-#endif
-
-/* Pausa la ejecucion una cantidad de milisegundos sin consumir CPU de mas */
-static void dormir_ms(int milisegundos)
-{
-#ifdef _WIN32
-    Sleep((DWORD)milisegundos);                 /* Sleep recibe milisegundos */
-#else
-    usleep(milisegundos * 1000);                /* usleep recibe microsegundos */
-#endif
-}
-
-/* Mueve el cursor del texto a la esquina superior izquierda (0,0) */
-static void ir_a_origen(void)
-{
-#ifdef _WIN32
-    COORD origen;                               /* Estructura {x, y} de Windows */
-    origen.X = 0;
-    origen.Y = 0;
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), origen);
-#else
-    printf("\033[H");                           /* Codigo ANSI: cursor a casa */
-#endif
-}
-
-/* Borra toda la pantalla antes de empezar la animacion en consola */
-static void limpiar_pantalla(void)
-{
-#ifdef _WIN32
-    system("cls");
-#else
-    printf("\033[2J\033[H");
-#endif
-}
-
-/* Oculta el cursor parpadeante durante la animacion de consola */
-static void ocultar_cursor(void)
-{
-#ifdef _WIN32
-    HANDLE consola = GetStdHandle(STD_OUTPUT_HANDLE);
-    CONSOLE_CURSOR_INFO info;
-    GetConsoleCursorInfo(consola, &info);
-    info.bVisible = FALSE;
-    SetConsoleCursorInfo(consola, &info);
-#endif
-}
-
-/* Vuelve a mostrar el cursor al terminar la animacion de consola */
-static void mostrar_cursor(void)
-{
-#ifdef _WIN32
-    HANDLE consola = GetStdHandle(STD_OUTPUT_HANDLE);
-    CONSOLE_CURSOR_INFO info;
-    GetConsoleCursorInfo(consola, &info);
-    info.bVisible = TRUE;
-    SetConsoleCursorInfo(consola, &info);
-#endif
-}
-
-/* Escribe el contorno de la Tierra (circulo de RADIO_TIERRA_CONSOLA filas) */
-static void dibujar_tierra(char matriz[ALTO_CONSOLA][ANCHO_CONSOLA + 2])
-{
-    int dy;                     /* Desplazamiento vertical respecto del centro */
-    int dx;                     /* Desplazamiento horizontal respecto del centro */
-    int medio_ancho;            /* Semiancho del circulo en columnas para cada fila */
-    double distancia;           /* Distancia al centro en filas equivalentes */
-
-    for (dy = -RADIO_TIERRA_CONSOLA; dy <= RADIO_TIERRA_CONSOLA; dy++) {
-        medio_ancho = (int)round(sqrt((double)(RADIO_TIERRA_CONSOLA * RADIO_TIERRA_CONSOLA
-                                               - dy * dy)) * FACTOR_PROPORCION_X);
-        if (CENTRO_Y + dy < 0 || CENTRO_Y + dy >= ALTO_CONSOLA) {
-            continue;                                                   /* Fuera de la matriz */
-        }
-        for (dx = -medio_ancho; dx <= medio_ancho; dx++) {
-            distancia = sqrt((double)(dx * dx) / (FACTOR_PROPORCION_X * FACTOR_PROPORCION_X)
-                             + (double)(dy * dy));
-            if (fabs(distancia - (double)RADIO_TIERRA_CONSOLA) < 0.5) { /* Solo el borde */
-                matriz[CENTRO_Y + dy][CENTRO_X + dx] = SIMBOLO_TIERRA;  /* Contorno 'O' */
-            }
-        }
-    }
-}
-
-/* Convierte la posicion fisica (metros) a fila y columna de la matriz 61x25 */
-static void convertir_a_consola(const SistemaOrbital *sistema, double escala,
-                                int *fila, int *columna)
-{
-    *columna = CENTRO_X + (int)round(sistema->pos_x_real / escala * FACTOR_PROPORCION_X);
-    *fila = CENTRO_Y - (int)round(sistema->pos_y_real / escala);
-}
-
-/* Dice si una celda pertenece al disco terrestre (para no borrar su contorno) */
-static int celda_sobre_tierra(int fila, int columna)
-{
-    double dy = (double)(fila - CENTRO_Y);
-    double dx = (double)(columna - CENTRO_X) / FACTOR_PROPORCION_X;
-    return sqrt(dx * dx + dy * dy) <= (double)RADIO_TIERRA_CONSOLA + 0.5;
-}
-
-/* Imprime la matriz completa con un encabezado de datos de la simulacion */
-static void imprimir_mundo(const char matriz[ALTO_CONSOLA][ANCHO_CONSOLA + 2],
-                           const SistemaOrbital *sistema, int vuelta_actual)
-{
-    int fila;
-    int columna;
-
-    ir_a_origen();              /* Cursor arriba: el proximo cuadro sobreescribe */
-
-    printf("  SIMULADOR ARTEMIS - Orbita LEO   Estado: %-8s  Vuelta %d/%d\n",
-           sistema->resultado_texto, vuelta_actual, sistema->cantidad_vueltas);
-    printf("  Ro = %.0f km   v = %.1f m/s   v ideal = %.1f m/s   v escape = %.1f m/s\n",
-           sistema->radio_orbital / 1000.0, sistema->velocidad_orbital,
-           sistema->velocidad_ideal, sistema->velocidad_escape);
-    printf("  Nave '#': Orion   Tierra 'O': contorno   '.': trayectoria\n");
-
-    for (fila = 0; fila < ALTO_CONSOLA; fila++) {
-        putchar('|');
-        for (columna = 0; columna < ANCHO_CONSOLA; columna++) {
-            putchar(matriz[fila][columna]);
-        }
-        putchar('|');
-        putchar('\n');
-    }
-    printf("  +-----------------------------------------------------------+\n");
-    printf("  Angulo theta = %.1f grados   omega = %.6f rad/s\n",
-           sistema->angulo_theta * 180.0 / PI, sistema->velocidad_angular);
-}
-
-/* Animacion en consola con la matriz de 61 x 25 caracteres */
-void ejecutar_animacion_2d(SistemaOrbital *sistema)
-{
-    char matriz[ALTO_CONSOLA][ANCHO_CONSOLA + 2];   /* Grilla de caracteres */
-    double progreso_altura;                         /* Fraccion de altura dentro del rango LEO */
-    int radio_orb_filas;                            /* Radio de la orbita en filas (7 a 10) */
-    double escala;                                  /* Metros por fila */
-    int frames_total;                               /* Cuadros totales */
-    double dt_sim;                                  /* Segundos simulados por cuadro */
-    double r;                                       /* Radio actual (m) */
-    double vr = 0.0;                                /* Velocidad radial (m/s) */
-    double nu = 0.0;                                /* Anomalia verdadera (rad) */
-    int fila, columna;                              /* Posicion de la nave en consola */
-    int fila_anterior = -1, columna_anterior = -1;  /* Posicion del cuadro previo */
-    int cuadro;                                     /* Indice del cuadro */
-    int vuelta_actual;                              /* Vuelta en curso */
-    int termino = 0;                                /* Bandera de fin */
-
-    /* Escala visual: la orbita entre 7 y 10 filas segun la altura */
-    progreso_altura = (sistema->altura_orbita - ALTURA_MIN) / (ALTURA_MAX - ALTURA_MIN);
-    if (progreso_altura < 0.0) progreso_altura = 0.0;
-    if (progreso_altura > 1.0) progreso_altura = 1.0;
-    radio_orb_filas = 7 + (int)round(progreso_altura * 3.0);
-    escala = sistema->radio_orbital / (double)radio_orb_filas;
-
-    preparar_tiempo(sistema, &frames_total, &dt_sim);   /* Tiempo acelerado */
-    r = sistema->radio_orbital;                         /* La nave parte en Ro */
-    sistema->angulo_theta = 0.0;
-
-    /* Cuadro inicial: matriz en blanco con la Tierra dibujada */
-    memset(matriz, (int)SIMBOLO_VACIO, sizeof(matriz));
-    for (fila = 0; fila < ALTO_CONSOLA; fila++) {
-        matriz[fila][ANCHO_CONSOLA] = '\0';
-    }
-    dibujar_tierra(matriz);
-
-    limpiar_pantalla();
-    ocultar_cursor();
-
-    for (cuadro = 0; cuadro < frames_total && !termino; cuadro++) { /* Bucle de cuadros */
-        fisica_cuadro(sistema, dt_sim, &r, &vr, &nu, &termino);    /* Avanza el modelo */
-
-        convertir_a_consola(sistema, escala, &fila, &columna);     /* A fila/columna */
-
-        if (fila_anterior >= 0 && !celda_sobre_tierra(fila_anterior, columna_anterior)) {
-            matriz[fila_anterior][columna_anterior] = SIMBOLO_RASTRO;  /* Deja el rastro '.' */
-        }
-        if (fila >= 0 && fila < ALTO_CONSOLA && columna >= 0 && columna < ANCHO_CONSOLA) {
-            matriz[fila][columna] = SIMBOLO_NAVE;                      /* Dibuja la nave '#' */
-        }
-        fila_anterior = fila;
-        columna_anterior = columna;
-
-        vuelta_actual = 1 + (int)(sistema->angulo_theta / (2.0 * PI));
-        if (vuelta_actual > sistema->cantidad_vueltas) vuelta_actual = sistema->cantidad_vueltas;
-
-        imprimir_mundo(matriz, sistema, vuelta_actual);
-        dormir_ms(FRAME_MS);
-    }
-
-    mostrar_cursor();
-    ir_a_origen();
-    printf("\n");
-    if (sistema->resultado_codigo == ESTADO_CAIDA) {
-        printf("  >>> IMPACTO: la nave reingreso a la atmosfera y toco la superficie.\n");
-    } else if (sistema->resultado_codigo == ESTADO_ESCAPE) {
-        printf("  >>> ESCAPE: la nave abandono la zona visible de la animacion.\n");
-    } else {
-        printf("  >>> Animacion completa: la nave recorrio %d vuelta(s) a la Tierra.\n",
-               sistema->cantidad_vueltas);
-    }
-    dormir_ms(1200);
-    limpiar_pantalla();
-}
-
-#endif /* USAR_RAYLIB */

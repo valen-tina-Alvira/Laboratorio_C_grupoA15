@@ -139,34 +139,109 @@ Las funciones reciben la estructura **por puntero** para modificar el estado ori
   
 
 ## 4. Compilación y ejecución
+ 
+ 
+### 4.1 Requisitos
+ 
+- **Windows** con un compilador **MinGW-w64 (gcc)** y `mingw32-make`. Se recomienda [w64devkit](https://github.com/skeeto/w64devkit) o el entorno UCRT64 de MSYS2.
+- La librería **raylib ya está incluida** en la carpeta `raylib/`: no hace falta instalarla.
+### 4.2 Compilar y ejecutar (versión con ventana gráfica)
+ 
+```bash
+mingw32-make # compila y genera simulador_artemis.exe
+simulador_artemis.exe # ejecuta el programa (en PowerShell: .\simulador_artemis.exe)
+```
+ 
+### 4.3 Versión de respaldo en consola (sin raylib)
+ 
+Si la ventana gráfica diera algún problema en el equipo donde se ejecuta, existe una versión que dibuja la animación con caracteres en la terminal:
+ 
+```bash
+mingw32-make consola
+simulador_artemis_consola.exe
+```
+ 
+### 4.4 Limpiar archivos generados
+ 
+```bash
+mingw32-make clean
+```
+ 
+### 4.5 Uso durante la animación
+ 
+- La animación se puede interrumpir con la tecla **ESC** o cerrando la ventana.
+- Al terminar, la ventana muestra el desenlace; con **ENTER**, **ESC** o cerrando la ventana se vuelve a la consola, donde aparece el reporte de la simulación.
+---
+ 
+## 5. Estructura del repositorio
+ 
+```
+Laboratorio_C_grupoA15/
+├── main.c
+├── artemis.c
+├── artemis.h
+├── simulador.c
+├── validaciones.c
+├── validaciones.h
+├── Makefile
+├── README.md
+└── raylib/
+├── include/
+└── lib/
+```
+ 
+---
+ 
+## 6. Pruebas realizadas
+ 
+| Prueba | Resultado |
+|---|---|
+| Simulación estándar (h = 192 km, Mn = 33.000 kg) | Ro = 6.563.000 m · v = 7.792,95 m/s · T = 5.291,52 s (88,19 min) · ac = 9,2534 m/s² · Fg = 305.362,10 N · Estable |
+| Pulso lateral con a = 0,50 m/s² y t = 10 s | vlat = 5,00 m/s · dy = 25,000 m |
+| Comprobación Fg = Fc | Diferencia de 0,0000 N |
+| Velocidad manual 7.700 / 7.760 / 7.793 / 7.900 / 11.000 / 11.100 m/s (h = 192 km) | Caída / Estable / Estable / Elíptica / Elíptica / Escape |
+| Altura 400 km | v = 7.672,3 m/s · T = 92,42 min |
+| Historial con 25 simulaciones | Quedan 20 registros, con IDs del 6 al 25 |
+| Entradas inválidas (`abc`, `12abc`, `3,5`, `1e5`, `nan`, solo ENTER) | Se rechazan con mensaje y se vuelve a pedir el dato |
+| Valores en los extremos de cada rango | Se aceptan; un valor fuera del rango se rechaza |
+| `a > 0` con `t = 0` | Se rechaza y se vuelve a pedir `t` |
+| `a = 0` | `t` se asigna a 0 automáticamente |
+ 
+---
+ 
+## 7. Registro del uso de Inteligencia Artificial
+ 
+**Herramienta utilizada:** Claude (Anthropic), mediante chat. [Completar con las herramientas que hayan usado los demás integrantes.]
+ 
+### 7.1 Tareas para las que se usó
+ 
+| Tarea | Consulta realizada (resumen) | Cómo se validó y adaptó |
+ 
+| Análisis del enunciado y planificación | Se subió el enunciado y se pidió acompañamiento para desarrollar el trabajo; se obtuvo una propuesta de módulos y de pasos de trabajo (estructura, validaciones, cálculos, menú, gráfica). | El grupo decidió el reparto de módulos y trabajó con ramas de Git. |
+| Módulo de validaciones | Cómo leer enteros y reales de forma segura, con rangos; cómo manejar la regla combinada entre aceleración y duración; cómo pedir confirmaciones S/N. | Se compiló y se probó con una tabla de entradas inválidas (letras, `12abc`, coma decimal, notación científica, `nan`, extremos del rango). Se corrigieron huecos detectados en una primera versión (por ejemplo, aceptar `12abc` o `1e5`). |
+| Cálculos físicos y clasificación de la órbita | Implementación de v, T, ac, Fg, velocidad de escape, pulso lateral y evaluación de estabilidad. | Se compararon los resultados con cálculos a mano y con los datos del enunciado (v ≈ 7.792,95 m/s, T ≈ 88,19 min). Se verificó que Fg = Fc. |
+| Historial y reportes | Cómo implementar el arreglo de 20 registros con desplazamiento `i = i − 1`, y el reporte de resultados. | Prueba con 25 simulaciones: se verificó que quedan 20 registros con IDs del 6 al 25. |
+| Demostraciones de conceptos | Redacción de las respuestas a las cuatro preguntas del enunciado con *fórmula → reemplazo → resultado*. | Se revisaron los valores contra los de la simulación estándar y con datos personalizados. |
+| Revisión del código de los compañeros | Análisis de los apuntes de diseño, de `artemis.h` y de `main.c`. | Se detectaron y corrigieron: falta de `#` en el `#ifndef`, uso de `char` en lugar de `int` para `getchar()`, la fórmula de la velocidad orbital sin raíz cuadrada y la velocidad de escape que debía ser √2·vi y no 2·vi. |
+| Depuración de errores | Interpretación de errores del compilador, del editor (IntelliSense), del enlazador y de la instalación de gcc y de la librería gráfica en Windows. | Se aplicaron las correcciones y se volvió a compilar hasta no tener errores ni advertencias. |
+| Git, Makefile y herramientas | Cómo trabajar con ramas, `.gitignore`, fusión de ramas, qué hace cada parte del Makefile y cómo incluir raylib en el proyecto. | Se probó el flujo en el equipo y se verificó la compilación desde un clon limpio del repositorio. |
+ 
+### 7.2 Cómo se garantizó la comprensión del código
+ 
+- Todo el código de apoyo se pidió **con comentarios línea por línea** para poder estudiarlo y explicarlo.
+- Cada módulo se **compiló y probó** con programas de prueba antes de integrarlo.
+- Las decisiones de diseño (por ejemplo, guardar el historial en un arreglo en memoria, y no en un archivo, porque es lo que pide el enunciado) fueron tomadas por el grupo.
+- Cada integrante preparó la explicación de las funciones de su parte para el coloquio.
+> Este registro debe ser revisado y completado por todos los integrantes para que refleje fielmente el uso real de herramientas de IA que hizo cada uno.
+ 
+---
+ 
+## 8. Video de presentación
+ 
+[Completar con el enlace al video de YouTube / Drive / Loom]
+ 
 
   
 
----
-
-## 5. Registro del uso de Inteligencia Artificial
-
-Herramientas utilizadas: **Claude (Anthropic)** — [COMPLETAR si usaron otras: ChatGPT, Copilot, Gemini, etc.]
-
-| Fecha | Herramienta | Tarea | Prompt / consulta | Cómo se validó y adaptó |
-
-
-**Criterio del equipo:** todo código sugerido por una IA fue leído, probado y entendido por los integrantes antes de incorporarlo, y cada integrante puede explicar cualquier parte del programa. [COMPLETAR o ajustar según lo que realmente hicieron]
-
----
-
-## 6. Pruebas realizadas
-
-| Entrada | Resultado esperado |
-|---------|--------------------|
-| Letras donde se pide un número | Mensaje de error y se vuelve a pedir el dato |
-| Opción de menú fuera de rango | Mensaje de error y se vuelve a pedir |
-| Masa de 5.000 kg o 60.000 kg | Rechazada (rango 10.000–50.000 kg) |
-| Aceleración > 0 con tiempo = 0 | Rechazada (el tiempo debe ser mayor que 0) |
-| Velocidad 6.500 m/s en prueba de estabilidad | Caída |
-| Velocidad 7.792,93 m/s | Órbita estable |
-| Velocidad 8.500 m/s | Órbita elíptica |
-| Velocidad 11.200 m/s | Escape |
-| 21 simulaciones seguidas | El historial conserva solo las últimas 20 |
-
-[COMPLETAR: agregar los resultados reales obtenidos]
+ 
+ 

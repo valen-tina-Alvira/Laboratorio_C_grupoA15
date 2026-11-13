@@ -5,17 +5,17 @@
 Universidad Tecnológica Nacional, Facultad Regional Resistencia
 Cátedra: Algoritmos y Estructuras de Datos | Ingeniería en Sistemas de Información
 
-Simulador interactivo en lenguaje C de la fase de inserción de la nave Orion en una órbita terrestre baja (LEO), dentro de la misión Artemis. Los datos se ingresan por consola y la simulación se muestra en una ventana gráfica (raylib).
+Simulador interactivo en lenguaje C de la fase de inserción de la nave Orion en una órbita terrestre baja (LEO), dentro de la misión Artemis. 
 ---
-
+Los datos se ingresan por consola y la simulación se muestra en una ventana gráfica (raylib).
 ## 1. Integrantes y comisión
 
 | Nº | Apellido y nombre | Legajo | Usuario de GitHub |
 |----|-------------------|--------|-------------------|
-| 1 | Alvira Coseres, Valentina| 31642 |   |
-| 2 | Alfonso Abatte, Valentina| 31059 |  |
-| 3 | Segovia,Sebastian| [COMPLETAR] | [COMPLETAR] |
-| 4 |  Saade,Antonio | [COMPLETAR] | [COMPLETAR] |
+| 1 | Alvira Coseres, Valentina| 31642 |https://github.com/valen-tina-Alvira   |
+| 2 | Alfonso Abatte, Valentina| 31059 | https://github.com/alfonsovalentina16-stack?shem=aimgspe,|
+| 3 | Segovia,Sebastian| 31336 | https://github.com/Segovia-Sebastian |
+| 4 |  Saade,Antonio | 27030 |https://github.com/ToniSaade  |
 
 - Grupo: A15
 - Comisión:  k1.1
@@ -202,21 +202,16 @@ Laboratorio_C_grupoA15/
  
 ## 7. Registro del uso de Inteligencia Artificial
  
-**Herramienta utilizada:** Claude (Anthropic), mediante chat. [Completar con las herramientas que hayan usado los demás integrantes.]
- 
+**Herramienta utilizada:** Claude (Anthropic), mediante chat. 
 ### 7.1 Tareas para las que se usó
-
+ 
 | Tarea | Consulta realizada (resumen) | Cómo se validó y adaptó |
 |---|---|---|
-| Análisis del enunciado y planificación | Se subió el enunciado y se pidió acompañamiento para desarrollar el trabajo; se obtuvo una propuesta de módulos y de pasos de trabajo (estructura, validaciones, cálculos, menú, gráfica). | El grupo decidió el reparto de módulos y trabajó con ramas de Git. |
-| Módulo de validaciones | Cómo leer enteros y reales de forma segura, con rangos; cómo manejar la regla combinada entre aceleración y duración; cómo pedir confirmaciones S/N. | Se compiló y se probó con una tabla de entradas inválidas (letras, `12abc`, coma decimal, notación científica, `nan`, extremos del rango). Se corrigieron huecos detectados en una primera versión (por ejemplo, aceptar `12abc` o `1e5`). |
-| Cálculos físicos y clasificación de la órbita | Implementación de v, T, ac, Fg, velocidad de escape, pulso lateral y evaluación de estabilidad. | Se compararon los resultados con cálculos a mano y con los datos del enunciado (v ≈ 7.792,95 m/s, T ≈ 88,19 min). Se verificó que Fg = Fc. |
-| Historial y reportes | Cómo implementar el arreglo de 20 registros con desplazamiento `i = i − 1`, y el reporte de resultados. | Prueba con 25 simulaciones: se verificó que quedan 20 registros con IDs del 6 al 25. |
-| Demostraciones de conceptos | Redacción de las respuestas a las cuatro preguntas del enunciado con *fórmula → reemplazo → resultado*. | Se revisaron los valores contra los de la simulación estándar y con datos personalizados. |
-| Revisión del código de los compañeros | Análisis de los apuntes de diseño, de `artemis.h` y de `main.c`. | Se detectaron y corrigieron: falta de `#` en el `#ifndef`, uso de `char` en lugar de `int` para `getchar()`, la fórmula de la velocidad orbital sin raíz cuadrada y la velocidad de escape que debía ser √2·vi y no 2·vi. |
-| Depuración de errores | Interpretación de errores del compilador, del editor (IntelliSense), del enlazador y de la instalación de gcc y de la librería gráfica en Windows. | Se aplicaron las correcciones y se volvió a compilar hasta no tener errores ni advertencias. |
-| Git, Makefile y herramientas | Cómo trabajar con ramas, `.gitignore`, fusión de ramas, qué hace cada parte del Makefile y cómo incluir raylib en el proyecto. | Se probó el flujo en el equipo y se verificó la compilación desde un clon limpio del repositorio. |
-
+| Diseño y planificación | Cómo organizar el simulador en módulos y pasos de trabajo, y cómo declarar las constantes, las variables y las estructuras de datos necesarias a partir del enunciado. | El grupo decidió el reparto de módulos, revisó las constantes y los rangos contra el enunciado y trabajó con ramas de Git. |
+| Lógica del programa | Apoyo para las validaciones de entrada, los cálculos físicos y la clasificación de la órbita, el historial de 20 registros, los reportes y las demostraciones de conceptos. | Se compiló y se probó cada módulo con programas de prueba; se compararon los resultados con cálculos a mano y con los datos del enunciado (v ≈ 7.792,95 m/s, T ≈ 88,19 min); se probaron entradas inválidas y valores en los extremos de cada rango. |
+| Animación gráfica | Ayuda en el desarrollo de la animación y de la ventana gráfica (movimiento de la nave y estados de la órbita). | Se probaron los cuatro estados (Caída, Estable, Elíptica, Escape) y la interrupción de la ventana; se mantuvo una versión de respaldo en consola. |
+| Revisión y corrección de código | Se pidió validar que el código fuera correcto y se corrigieron errores. | Cada hallazgo se verificó en el código y compilando. Por ejemplo, se corrigieron la falta de un `#` en un `#ifndef`, el uso de `char` en lugar de `int` con `getchar()` y fórmulas de los apuntes de diseño (velocidad orbital sin raíz cuadrada, velocidad de escape como 2·vi en lugar de √2·vi). Una revisión externa con otra IA se contrastó con el código real y se descartó lo que no correspondía. |
+| Problemas técnicos | Interpretación de errores del compilador, del editor y del enlazador; instalación de gcc y de raylib en Windows; Git, Makefile y `.gitignore`. | Se aplicaron las correcciones y se volvió a compilar hasta no tener errores ni advertencias. |
 ### 7.2 Cómo se garantizó la comprensión del código
  
 - Todo el código de apoyo se pidió **con comentarios línea por línea** para poder estudiarlo y explicarlo.

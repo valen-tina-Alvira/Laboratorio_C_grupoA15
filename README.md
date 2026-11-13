@@ -116,7 +116,7 @@ El programa guarda hasta **20 simulaciones** en un arreglo de registros. Al ejec
 | `main.c` | Función `main()`, menú principal, submenú del simulador y flujo general |
 | `artemis.h` | Constantes (`#define`), tipos (`enum`, `struct`) y prototipos de las funciones públicas |
 | `artemis.c` | Lógica de negocio: cálculos físicos, clasificación de la órbita, configuración de modos, historial, reportes y demostraciones |
-| `simulador.c` | Actualización del estado cuadro a cuadro y animación gráfica (versión con ventana raylib y versión de respaldo en consola) |
+| `simulador.c` | Actualización del estado cuadro a cuadro y animación gráfica (ventana gráfica raylib) |
 | `validaciones.c/.h` | Ingreso seguro de enteros, reales y respuestas S/N; regla combinada del pulso lateral; pausas |
 | `Makefile` | Compilación del proyecto |
 | `raylib/` | Librería gráfica raylib (cabeceras y librería estática) |
@@ -145,29 +145,20 @@ Las funciones reciben la estructura **por puntero** para modificar el estado ori
  
 - **Windows** con un compilador **MinGW-w64 (gcc)** y `mingw32-make`. Se recomienda [w64devkit](https://github.com/skeeto/w64devkit) o el entorno UCRT64 de MSYS2.
 - La librería **raylib ya está incluida** en la carpeta `raylib/`: no hace falta instalarla.
-### 4.2 Compilar y ejecutar (versión con ventana gráfica)
+### 4.2 Compilar y ejecutar 
  
 ```bash
 mingw32-make # compila y genera simulador_artemis.exe
 simulador_artemis.exe # ejecuta el programa (en PowerShell: .\simulador_artemis.exe)
 ```
  
-### 4.3 Versión de respaldo en consola (sin raylib)
- 
-Si la ventana gráfica diera algún problema en el equipo donde se ejecuta, existe una versión que dibuja la animación con caracteres en la terminal:
- 
-```bash
-mingw32-make consola
-simulador_artemis_consola.exe
-```
- 
-### 4.4 Limpiar archivos generados
+### 4.3 Limpiar archivos generados
  
 ```bash
 mingw32-make clean
 ```
  
-### 4.5 Uso durante la animación
+### 4.4 Uso durante la animación
  
 - La animación se puede interrumpir con la tecla **ESC** o cerrando la ventana.
 - Al terminar, la ventana muestra el desenlace; con **ENTER**, **ESC** o cerrando la ventana se vuelve a la consola, donde aparece el reporte de la simulación.
@@ -214,9 +205,9 @@ Laboratorio_C_grupoA15/
 **Herramienta utilizada:** Claude (Anthropic), mediante chat. [Completar con las herramientas que hayan usado los demás integrantes.]
  
 ### 7.1 Tareas para las que se usó
- 
+
 | Tarea | Consulta realizada (resumen) | Cómo se validó y adaptó |
- 
+|---|---|---|
 | Análisis del enunciado y planificación | Se subió el enunciado y se pidió acompañamiento para desarrollar el trabajo; se obtuvo una propuesta de módulos y de pasos de trabajo (estructura, validaciones, cálculos, menú, gráfica). | El grupo decidió el reparto de módulos y trabajó con ramas de Git. |
 | Módulo de validaciones | Cómo leer enteros y reales de forma segura, con rangos; cómo manejar la regla combinada entre aceleración y duración; cómo pedir confirmaciones S/N. | Se compiló y se probó con una tabla de entradas inválidas (letras, `12abc`, coma decimal, notación científica, `nan`, extremos del rango). Se corrigieron huecos detectados en una primera versión (por ejemplo, aceptar `12abc` o `1e5`). |
 | Cálculos físicos y clasificación de la órbita | Implementación de v, T, ac, Fg, velocidad de escape, pulso lateral y evaluación de estabilidad. | Se compararon los resultados con cálculos a mano y con los datos del enunciado (v ≈ 7.792,95 m/s, T ≈ 88,19 min). Se verificó que Fg = Fc. |
@@ -225,7 +216,7 @@ Laboratorio_C_grupoA15/
 | Revisión del código de los compañeros | Análisis de los apuntes de diseño, de `artemis.h` y de `main.c`. | Se detectaron y corrigieron: falta de `#` en el `#ifndef`, uso de `char` en lugar de `int` para `getchar()`, la fórmula de la velocidad orbital sin raíz cuadrada y la velocidad de escape que debía ser √2·vi y no 2·vi. |
 | Depuración de errores | Interpretación de errores del compilador, del editor (IntelliSense), del enlazador y de la instalación de gcc y de la librería gráfica en Windows. | Se aplicaron las correcciones y se volvió a compilar hasta no tener errores ni advertencias. |
 | Git, Makefile y herramientas | Cómo trabajar con ramas, `.gitignore`, fusión de ramas, qué hace cada parte del Makefile y cómo incluir raylib en el proyecto. | Se probó el flujo en el equipo y se verificó la compilación desde un clon limpio del repositorio. |
- 
+
 ### 7.2 Cómo se garantizó la comprensión del código
  
 - Todo el código de apoyo se pidió **con comentarios línea por línea** para poder estudiarlo y explicarlo.

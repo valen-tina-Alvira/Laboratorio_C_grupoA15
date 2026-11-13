@@ -77,7 +77,6 @@ int main(void)
     int opcion;                         /* Opcion del menu principal */
 
     inicializar_historial(&historial);  /* Deja el historial vacio al comenzar */
-    cargar_historial_archivo(&historial);   /* Recupera las simulaciones guardadas en historial.txt */
     mostrar_encabezado_creditos();      /* Pantalla de presentacion del grupo */
 
     do {                                /* Bucle principal del programa */

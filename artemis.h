@@ -1,5 +1,5 @@
 
-ifndef ARTEMIS_H                   /* Si ARTEMIS_H no esta definido todavia, incluye este archivo */
+#ifndef ARTEMIS_H                  /* Si ARTEMIS_H no esta definido todavia, incluye este archivo */
 #define ARTEMIS_H                   /* Lo define para que el archivo no se incluya dos veces (guard) */
 
 /* =========================================================================
@@ -62,6 +62,7 @@ ifndef ARTEMIS_H                   /* Si ARTEMIS_H no esta definido todavia, inc
 
 #define MAX_HISTORIAL 20            /* Capacidad maxima del arreglo de simulaciones */
 #define MAX_TIEMPO_ANIMACION 60.0   /* Duracion maxima en tiempo real de la animacion (s) */
+#define FRAME_MS 80                 /* Milisegundos entre cuadros de la animacion (80 ms = 12 cuadros por segundo) */
 #define MAX_CADENA_ESTADO 32        /* Longitud maxima para textos de estado y modo */
 
 /* =========================================================================
@@ -162,5 +163,8 @@ void mostrar_historial_simulaciones(const HistorialSimulaciones *historial);
 void mostrar_encabezado_creditos(void);
 void mostrar_descripcion_artemis(void);
 void mostrar_descripcion_simulador(void);
+
+ /* Reporte final con los resultados de una simulacion */
+void mostrar_resumen_simulacion(const SistemaOrbital *sistema);
 
 #endif /* ARTEMIS_H */              /* Cierra el bloque del guard (obligatorio) */

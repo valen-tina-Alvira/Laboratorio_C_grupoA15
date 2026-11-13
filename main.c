@@ -1,4 +1,3 @@
-
 #include <stdio.h>          /* Para printf (todas las pantallas del menu) */
 #include "artemis.h"        /* Constantes, estructuras y logica del simulador */
 #include "validaciones.h"   /* Para leer_entero_rango (lectura segura del menu) */

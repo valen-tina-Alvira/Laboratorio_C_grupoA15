@@ -85,6 +85,11 @@ double leer_double_rango(double min, double max)   /* Repite hasta obtener un re
             fin++;                          /* Los salta */
         }
 
+        if (strspn(linea, "0123456789+-. ") != strlen(linea)) {  /* Si hay algun caracter que no sea digito, signo, punto o espacio */
+            printf("   [ERROR] Entrada invalida. Use solo digitos y punto [%.2f - %.2f]: ", min, max);  /* Avisa el error */
+            continue;       /* Vuelve a pedir el dato */
+        }
+        
         if (fin == linea || *fin != '\0') { /* Si no convirtio nada, o sobraron caracteres (ej: "3.5x") */
             printf("   [ERROR] Entrada invalida. Ingrese un numero [%.2f - %.2f]: ", min, max);
         } else if (!(valor >= min && valor <= max)) {  /* Fuera de rango; tambien atrapa "nan", que falla toda comparacion */
@@ -115,4 +120,34 @@ void leer_pulso_lateral(double *aceleracion, double *tiempo,
             printf("   [ERROR] Con aceleracion mayor que 0, la duracion debe ser mayor que 0.\n");
         }
     } while (*tiempo <= 0.0);       /* Vuelve a pedir mientras t no sea positivo */
+}
+
+int leer_si_no(void)        /* Repite hasta que el usuario responda S o N */
+{
+    char linea[TAM_LINEA];  /* Aqui se guarda el texto ingresado */
+
+    while (1) {             /* Bucle: solo se sale con return */
+        if (!leer_linea(linea, TAM_LINEA)) {    /* Si el texto fue demasiado largo */
+            printf("   [ERROR] Entrada demasiado larga. Responda S o N: ");  /* Avisa el error */
+            continue;       /* Vuelve a pedir el dato */
+        }
+
+        if (strlen(linea) == 1) {               /* Solo se acepta un unico caracter */
+            if (linea[0] == 's' || linea[0] == 'S') {   /* Si respondio S o s */
+                return 1;   /* Devuelve 1 (verdadero: "si") */
+            }
+            if (linea[0] == 'n' || linea[0] == 'N') {   /* Si respondio N o n */
+                return 0;   /* Devuelve 0 (falso: "no") */
+            }
+        }
+
+        printf("   [ERROR] Respuesta invalida. Responda S o N: ");  /* Cualquier otra cosa es invalida */
+    }
+}
+
+void esperar_enter(void)    /* Pausa hasta que el usuario presione ENTER */
+{
+    char linea[TAM_LINEA];  /* Aqui se guarda (y se descarta) lo que escriba el usuario */
+
+    leer_linea(linea, TAM_LINEA);   /* Lee la linea completa, asi no queda texto sobrante en el buffer */
 }

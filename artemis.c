@@ -3,7 +3,7 @@
 #include <math.h>       /* Para sqrt (raiz cuadrada) */
 #include "artemis.h"    /* Constantes, estructuras y prototipos del modulo */
 #include "validaciones.h"   /* Para usar las lecturas seguras por teclado */
-
+#define GRAVEDAD_SUPERFICIE 9.80    /* g en la superficie terrestre (m/s^2), para comparar la aceleracion centripeta */
 /* Convierte el codigo del estado orbital en su texto. static: solo se usa en este archivo */
 static const char *texto_estado(EstadoOrbital estado)
 {
@@ -216,4 +216,196 @@ void mostrar_historial_simulaciones(const HistorialSimulaciones *historial)
                r->tiempo_aceleracion, r->desviacion_lateral,
                r->cantidad_vueltas, r->resultado);                  /* Una fila por simulacion */
     }
+}
+
+static void imprimir_separador(void)
+{
+    printf("  ----------------------------------------------------------------------\n");  
+}
+
+/* Pantalla 1 del menu principal: descripcion breve del programa Artemis */
+void mostrar_descripcion_artemis(void)
+{
+    printf("\n  ======================================================================\n");   /* Linea decorativa superior */
+    printf("                 PROGRAMA ARTEMIS (DESCRIPCION BREVE)\n");                        /* Titulo de la pantalla */
+    printf("  ======================================================================\n");     /* Linea decorativa inferior */
+
+    /* Parrafo 1: que es el programa Artemis */
+    printf("   Artemis es el programa de exploracion espacial de la NASA cuyo\n");
+    printf("   objetivo es volver a llevar seres humanos a la Luna y preparar\n");
+    printf("   futuras misiones tripuladas mas lejanas.\n\n");
+
+    /* Parrafo 2: los componentes principales de la mision */
+    printf("   La mision utiliza el cohete Space Launch System (SLS) y la nave\n");
+    printf("   Orion, que transporta a la tripulacion.\n\n");
+
+    /* Parrafo 3: en que fase se centra este simulador */
+    printf("   Tras el despegue, la nave es inyectada en una orbita terrestre\n");
+    printf("   baja (LEO) de estacionamiento, antes de la inyeccion translunar.\n");
+    printf("   Este simulador recrea esa fase: la insercion y la estabilidad\n");
+    printf("   de la nave Orion en orbita LEO.\n");
+    imprimir_separador();                                                                      /* Linea de cierre */
+}
+
+/* Pantalla 2 del menu principal: descripcion del simulador y sus reglas */
+void mostrar_descripcion_simulador(void)
+{
+    printf("\n  ======================================================================\n");   /* Linea decorativa superior */
+    printf("                     DESCRIPCION DEL SIMULADOR\n");                               /* Titulo de la pantalla */
+    printf("  ======================================================================\n");     /* Linea decorativa inferior */
+
+    /* Parrafo 1: que modela el simulador */
+    printf("   Simula el movimiento circular uniforme (MCU) de la nave Orion\n");
+    printf("   alrededor de la Tierra, donde la atraccion gravitatoria actua\n");
+    printf("   como fuerza centripeta.\n\n");
+
+    /* Parrafo 2: variables que el usuario puede cargar, con sus rangos reales (salen de las constantes) */
+    printf("   Variables y rangos permitidos:\n");
+    printf("    - Masa de la nave Mn ........ [%.0f ; %.0f] kg\n", MASA_NAVE_MIN, MASA_NAVE_MAX);
+    printf("    - Altura orbital h .......... [%.0f ; %.0f] m\n", ALTURA_MIN, ALTURA_MAX);
+    printf("    - Vueltas ................... [%d ; %d]\n", VUELTAS_MIN, VUELTAS_MAX);
+    printf("    - Aceleracion lateral a ..... [%.0f ; %.0f] m/s^2\n", ACEL_LAT_MIN, ACEL_LAT_MAX);
+    printf("    - Duracion del pulso t ...... [%.0f ; %.0f] s\n", TIEMPO_LAT_MIN, TIEMPO_LAT_MAX);
+    printf("    - Velocidad (prueba) ........ [%.0f ; %.0f] m/s\n\n", VEL_PRUEBA_MIN, VEL_PRUEBA_MAX);
+
+    /* Parrafo 3: como se clasifica el resultado, segun la velocidad v y la ideal vi */
+    printf("   Clasificacion de la orbita segun la velocidad v (vi = ideal):\n");
+    printf("    - Caida ..... v < vi - %.0f m/s\n", TOLERANCIA_VEL);
+    printf("    - Estable ... vi -/+ %.0f m/s\n", TOLERANCIA_VEL);
+    printf("    - Eliptica .. vi + %.0f m/s <= v < velocidad de escape\n", TOLERANCIA_VEL);
+    printf("    - Escape .... v >= velocidad de escape (raiz(2) * vi)\n");
+    imprimir_separador();                                                                      /* Linea de cierre */
+}
+
+/* Respuesta 1: Fg actua como fuerza centripeta y velocidad orbital */
+static void demo_fuerza_y_velocidad(const SistemaOrbital *s)
+{
+    double fc = s->masa_nave * s->velocidad_ideal * s->velocidad_ideal / s->radio_orbital;   /* Fc = Mn * v^2 / Ro con la v ideal */
+
+    printf("\n  [1] La gravedad como fuerza centripeta y la velocidad orbital\n");   /* Titulo de la respuesta */
+    imprimir_separador();                                                           /* Linea separadora */
+
+    printf("   Fuerza gravitatoria:  Fg = G * Mt * Mn / Ro^2\n");                   /* Formula de Fg */
+    printf("   Reemplazo:  Fg = %.3e * %.3e * %.0f / (%.0f)^2\n",
+           G_UNIVERSAL, MASA_TIERRA, s->masa_nave, s->radio_orbital);               /* Valores usados */
+    printf("   Resultado:  Fg = %.2f N\n\n", s->atraccion_gravitatoria);            /* Resultado de Fg */
+
+    printf("   Fuerza centripeta:  Fc = Mn * v^2 / Ro\n");                          /* Formula de Fc */
+    printf("   Reemplazo:  Fc = %.0f * (%.2f)^2 / %.0f\n",
+           s->masa_nave, s->velocidad_ideal, s->radio_orbital);                     /* Valores usados */
+    printf("   Resultado:  Fc = %.2f N\n\n", fc);                                   /* Resultado de Fc */
+
+    printf("   Comprobacion:  |Fg - Fc| = %.4f N  ->  Fg actua como Fc\n\n",
+           s->atraccion_gravitatoria > fc ? s->atraccion_gravitatoria - fc
+                                          : fc - s->atraccion_gravitatoria);        /* Diferencia en valor absoluto */
+
+    printf("   Al igualar Fg = Fc:  G*Mt*Mn / Ro^2 = Mn * v^2 / Ro\n");             /* Planteo de la igualdad */
+    printf("   La masa Mn se cancela, por eso:  v = raiz(G * Mt / Ro)\n");          /* Despeje de la velocidad */
+    printf("   Reemplazo:  v = raiz(%.3e * %.3e / %.0f)\n",
+           G_UNIVERSAL, MASA_TIERRA, s->radio_orbital);                             /* Valores usados */
+    printf("   Resultado:  v = %.2f m/s\n", s->velocidad_ideal);                    /* Velocidad orbital */
+}
+
+/* Respuesta 2: periodo orbital */
+static void demo_periodo(const SistemaOrbital *s)
+{
+    printf("\n  [2] Periodo orbital (tiempo de una vuelta completa)\n");             /* Titulo de la respuesta */
+    imprimir_separador();                                                           /* Linea separadora */
+
+    printf("   Formula:  T = 2 * pi * Ro / v\n");                                   /* Formula del periodo */
+    printf("   Reemplazo:  T = 2 * pi * %.0f / %.2f\n", s->radio_orbital, s->velocidad_ideal);   /* Valores usados */
+    printf("   Resultado:  T = %.2f s = %.2f min\n", s->periodo_segundos, s->periodo_minutos);    /* En segundos y minutos */
+    printf("   Para %d vuelta(s):  %.2f min\n",
+           s->cantidad_vueltas, s->periodo_minutos * s->cantidad_vueltas);           /* Tiempo total de las vueltas pedidas */
+}
+
+/* Respuesta 3: aceleracion centripeta */
+static void demo_centripeta(const SistemaOrbital *s)
+{
+    printf("\n  [3] Aceleracion centripeta\n");                                      /* Titulo de la respuesta */
+    imprimir_separador();                                                           /* Linea separadora */
+
+    printf("   Formula:  ac = v^2 / Ro   (equivale a G * Mt / Ro^2)\n");            /* Formula de ac */
+    printf("   Reemplazo:  ac = (%.2f)^2 / %.0f\n", s->velocidad_ideal, s->radio_orbital);       /* Valores usados */
+    printf("   Resultado:  ac = %.4f m/s^2\n", s->aceleracion_centripeta);          /* Resultado de ac */
+    printf("   Comparacion con la gravedad en superficie:  ac = %.3f g\n",
+           s->aceleracion_centripeta / GRAVEDAD_SUPERFICIE);                        /* ac expresada como multiplo de g */
+}
+
+/* Respuesta 4: pulso lateral, trayectoria resultante y desviacion */
+static void demo_pulso_lateral(const SistemaOrbital *s)
+{
+    double v_final;     /* Modulo de la velocidad despues del pulso */
+    double angulo;      /* Giro de la direccion de la velocidad, en grados */
+
+    printf("\n  [4] Pulso de aceleracion lateral\n");                                /* Titulo de la respuesta */
+    imprimir_separador();                                                           /* Linea separadora */
+
+    if (s->aceleracion_lateral <= 0.0) {                                            /* Si no hay propulsion lateral */
+        printf("   No hay pulso lateral (a = 0): la nave sigue en su orbita circular.\n");  /* Informa y termina */
+        return;                                                                     /* No hay nada mas que calcular */
+    }
+
+    v_final = sqrt(s->velocidad_ideal * s->velocidad_ideal
+                   + s->velocidad_lateral * s->velocidad_lateral);                  /* Composicion de velocidades perpendiculares */
+    angulo = atan2(s->velocidad_lateral, s->velocidad_ideal) * 180.0 / PI;          /* Angulo de giro, pasado de radianes a grados */
+
+    printf("   Velocidad transversal:  vlat = a * t\n");                            /* Formula de la velocidad lateral */
+    printf("   Reemplazo:  vlat = %.2f * %.2f\n", s->aceleracion_lateral, s->tiempo_aceleracion);   /* Valores usados */
+    printf("   Resultado:  vlat = %.2f m/s\n\n", s->velocidad_lateral);             /* Resultado de vlat */
+
+    printf("   Desviacion lateral:  dy = 1/2 * a * t^2\n");                         /* Formula de la desviacion */
+    printf("   Reemplazo:  dy = 0.5 * %.2f * (%.2f)^2\n", s->aceleracion_lateral, s->tiempo_aceleracion);   /* Valores usados */
+    printf("   Resultado:  dy = %.3f m  (%.6f %% del radio orbital)\n\n",
+           s->desviacion_lateral, 100.0 * s->desviacion_lateral / s->radio_orbital);  /* Resultado y su proporcion respecto de Ro */
+
+    printf("   Trayectoria resultante:\n");                                         /* Descripcion cualitativa */
+    printf("    - Durante el pulso la nave se desplaza %.3f m hacia el costado.\n", s->desviacion_lateral);
+    printf("    - La velocidad pasa de %.4f a %.4f m/s (modulo casi igual).\n", s->velocidad_ideal, v_final);
+    printf("    - Su direccion gira %.4f grados respecto de la original.\n", angulo);
+    printf("    - Ya no es exactamente perpendicular al radio, por lo que la\n");
+    printf("      orbita deja de ser circular perfecta: cambia levemente.\n");
+}
+
+/* Opcion 3.4: demostraciones de conceptos fisicos con preguntas y respuestas */
+void ejecutar_demostraciones_conceptos(SistemaOrbital *sistema, HistorialSimulaciones *historial)
+{
+    int opcion;     /* Opcion elegida en el submenu de preguntas */
+
+    printf("\n  === DEMOSTRACIONES DE CONCEPTOS FISICOS ===\n");                    /* Titulo de la pantalla */
+    printf("   Desea usar los datos predefinidos del escenario? [S/N]: ");          /* Pregunta si usa datos fijos */
+
+    if (leer_si_no()) {                                     /* Si respondio que si */
+        cargar_parametros_estandar(sistema);                /* Carga los valores predefinidos */
+    } else {                                                /* Si respondio que no */
+        configurar_simulacion_personalizada(sistema);       /* Pide los datos por teclado */
+    }
+
+    calcular_magnitudes_orbitales(sistema, 0);              /* Calcula todas las magnitudes con la velocidad ideal */
+    /* ejecutar_animacion_2d(sistema); */                   /* Cuando exista la parte grafica, se ejecuta aca antes de los calculos */
+    guardar_en_historial(historial, sistema, "Demo");       /* Registra esta ejecucion en el historial */
+
+    do {                                                    /* Repite el submenu hasta que elija volver */
+        printf("\n  --- Preguntas de analisis (elija una) ---\n");   /* Titulo del submenu */
+        printf("   [1] La gravedad como fuerza centripeta y la velocidad orbital\n");
+        printf("   [2] Periodo orbital en segundos y minutos\n");
+        printf("   [3] Aceleracion centripeta\n");
+        printf("   [4] Pulso lateral: trayectoria y desviacion\n");
+        printf("   [5] Volver\n");
+        printf("   Seleccione [1-5]: ");                    /* Pide la opcion */
+        opcion = leer_entero_rango(1, 5);                   /* Lee la opcion validada */
+
+        switch (opcion) {                                   /* Ejecuta la respuesta elegida */
+            case 1: demo_fuerza_y_velocidad(sistema); break;    /* Pregunta 1 */
+            case 2: demo_periodo(sistema); break;               /* Pregunta 2 */
+            case 3: demo_centripeta(sistema); break;            /* Pregunta 3 */
+            case 4: demo_pulso_lateral(sistema); break;         /* Pregunta 4 */
+            default: break;                                     /* La opcion 5 no hace nada: sale del bucle */
+        }
+
+        if (opcion != 5) {                                  /* Si mostro una respuesta */
+            printf("\n  Presione ENTER para continuar...");      /* Pausa para poder leerla */
+            esperar_enter();                                /* Espera el Enter del usuario */
+        }
+    } while (opcion != 5);                                  /* Termina al elegir volver */
 }

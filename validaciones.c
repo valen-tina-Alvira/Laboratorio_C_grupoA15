@@ -5,18 +5,24 @@
 #include <ctype.h>          /* Para isspace (saltar espacios al final) */
 #include "validaciones.h"   /* Para que este .c coincida con los prototipos declarados */
 
+/* =========================================================================
+ * 1. CONSTANTES LOCALES
+ * ========================================================================= */
 #define TAM_LINEA 64        /* Tamano maximo del texto que se lee por teclado */
 
-void limpiar_buffer(void)   /* Vacia el buffer de entrada */
+/* =========================================================================
+ * 2. FUNCIONES AUXILIARES INTERNAS
+ * ========================================================================= */
+void limpiar_buffer(void)  
 {
-    int c;                  /* int (no char) porque getchar() devuelve int y puede devolver EOF */
+    int c;                  
     while ((c = getchar()) != '\n' && c != EOF);  /* Descarta caracteres hasta el Enter o el fin de entrada */
 }
 
 /* Lee una linea de texto. Devuelve 1 si entro completa y 0 si era demasiado larga */
 static int leer_linea(char *destino, int tam)   /* static: solo se usa dentro de este archivo */
 {
-    size_t largo;           /* Longitud del texto leido */
+    size_t largo;           
 
     if (fgets(destino, tam, stdin) == NULL) {   /* fgets devuelve NULL si se cerro la entrada (EOF) */
         printf("\n   [ERROR] Se cerro la entrada de datos. Fin del programa.\n");  /* Avisa el motivo */
@@ -33,6 +39,10 @@ static int leer_linea(char *destino, int tam)   /* static: solo se usa dentro de
     return 0;               /* Avisa que la linea fue demasiado larga */
 }
 
+/* =========================================================================
+ * 3. LECTURA SEGURA DE ENTEROS Y REALES
+ * ========================================================================= */
+
 int leer_entero_rango(int min, int max)   /* Repite hasta obtener un entero dentro de [min, max] */
 {
     char linea[TAM_LINEA];  /* Aqui se guarda el texto ingresado */
@@ -48,8 +58,8 @@ int leer_entero_rango(int min, int max)   /* Repite hasta obtener un entero dent
         errno = 0;                          /* Borra errores previos para detectar los de strtol */
         valor = strtol(linea, &fin, 10);    /* Convierte el texto a entero en base 10 */
 
-        while (isspace((unsigned char)*fin)) {  /* Mientras queden espacios al final del texto */
-            fin++;                          /* Los salta (permite "5 " como valido) */
+        while (isspace((unsigned char)*fin)) {    /* Permite espacios al final ("5 ") */
+            fin++;                          
         }
 
         if (fin == linea || *fin != '\0') { /* Si no convirtio nada, o sobraron caracteres (ej: "12abc") */
@@ -100,28 +110,11 @@ double leer_double_rango(double min, double max)   /* Repite hasta obtener un re
     }
 }
 
-/* Pide aceleracion a y duracion t. Regla: si a = 0, t se asigna a 0; si a > 0, t debe ser > 0 */
-void leer_pulso_lateral(double *aceleracion, double *tiempo,
-                        double aceleracion_max, double tiempo_max)
-{
-    printf("   Aceleracion lateral a [0 - %.2f] m/s^2: ", aceleracion_max);  /* Pide la aceleracion */
-    *aceleracion = leer_double_rango(0.0, aceleracion_max);   /* Guarda el valor validado en la variable del que llama */
 
-    if (*aceleracion == 0.0) {      /* Si no hay propulsion lateral */
-        *tiempo = 0.0;              /* El tiempo se asigna a 0 automaticamente */
-        printf("   Aceleracion nula: la duracion del pulso se asigna a 0 s.\n");  /* Informa al usuario */
-        return;                     /* No hace falta pedir la duracion */
-    }
 
-    do {                            /* Si a > 0, repite hasta que t sea mayor que 0 */
-        printf("   Duracion del pulso t (0 - %.2f] s: ", tiempo_max);   /* Pide la duracion */
-        *tiempo = leer_double_rango(0.0, tiempo_max);   /* Valida el rango [0, tiempo_max] */
-        if (*tiempo <= 0.0) {       /* t = 0 no es valido cuando hay aceleracion */
-            printf("   [ERROR] Con aceleracion mayor que 0, la duracion debe ser mayor que 0.\n");
-        }
-    } while (*tiempo <= 0.0);       /* Vuelve a pedir mientras t no sea positivo */
-}
-
+/* =========================================================================
+ * 4. CONFIRMACIONES Y PAUSAS
+ * ========================================================================= */
 int leer_si_no(void)        /* Repite hasta que el usuario responda S o N */
 {
     char linea[TAM_LINEA];  /* Aqui se guarda el texto ingresado */
@@ -150,4 +143,29 @@ void pausar_enter (void)    /* Pausa hasta que el usuario presione ENTER */
     char linea[TAM_LINEA];  /* Aqui se guarda (y se descarta) lo que escriba el usuario */
 
     leer_linea(linea, TAM_LINEA);   /* Lee la linea completa, asi no queda texto sobrante en el buffer */
+}
+
+/* =========================================================================
+ * 5. VALIDACION COMBINADA: PULSO LATERAL
+ * ========================================================================= */
+/* Pide aceleracion a y duracion t. Regla: si a = 0, t se asigna a 0; si a > 0, t debe ser > 0 */
+void leer_pulso_lateral(double *aceleracion, double *tiempo,
+                        double aceleracion_max, double tiempo_max)
+{
+    printf("   Aceleracion lateral a [0 - %.2f] m/s^2: ", aceleracion_max);  /* Pide la aceleracion */
+    *aceleracion = leer_double_rango(0.0, aceleracion_max);   /* Guarda el valor validado en la variable del que llama */
+
+    if (*aceleracion == 0.0) {      /* Si no hay propulsion lateral */
+        *tiempo = 0.0;              /* El tiempo se asigna a 0 automaticamente */
+        printf("   Aceleracion nula: la duracion del pulso se asigna a 0 s.\n");  /* Informa al usuario */
+        return;                     /* No hace falta pedir la duracion */
+    }
+
+    do {                            /* Si a > 0, repite hasta que t sea mayor que 0 */
+        printf("   Duracion del pulso t (0 - %.2f] s: ", tiempo_max);   /* Pide la duracion */
+        *tiempo = leer_double_rango(0.0, tiempo_max);   /* Valida el rango [0, tiempo_max] */
+        if (*tiempo <= 0.0) {       /* t = 0 no es valido cuando hay aceleracion */
+            printf("   [ERROR] Con aceleracion mayor que 0, la duracion debe ser mayor que 0.\n");
+        }
+    } while (*tiempo <= 0.0);       /* Vuelve a pedir mientras t no sea positivo */
 }

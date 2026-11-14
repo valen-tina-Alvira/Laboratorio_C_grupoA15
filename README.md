@@ -15,7 +15,7 @@ Los datos se ingresan por consola y la simulación se muestra en una ventana gr�
 | 1 | Alvira Coseres, Valentina| 31642 |https://github.com/valen-tina-Alvira   |
 | 2 | Alfonso Abatte, Valentina| 31059 | https://github.com/alfonsovalentina16-stack?shem=aimgspe,|
 | 3 | Segovia,Sebastian| 31336 | https://github.com/Segovia-Sebastian |
-| 4 |  Saade,Antonio | 27030 |https://github.com/ToniSaade  |
+| 4 |  Wadih Antonio Saade | 27030 |https://github.com/ToniSaade  |
 
 - Grupo: A15
 - Comisión:  k1.1
@@ -223,8 +223,10 @@ Laboratorio_C_grupoA15/
 ---
  
 ## 8. Video de presentación
+
+https://drive.google.com/file/d/15woC6IVU6hbNfhh5c8oZQDUHcD-3j-gp/view?usp=drive_link
  
-[Completar con el enlace al video de YouTube / Drive / Loom]
+
  
 
   

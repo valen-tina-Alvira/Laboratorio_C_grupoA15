@@ -218,8 +218,9 @@ Laboratorio_C_grupoA15/
 - Cada módulo se **compiló y probó** con programas de prueba antes de integrarlo.
 - Las decisiones de diseño (por ejemplo, guardar el historial en un arreglo en memoria, y no en un archivo, porque es lo que pide el enunciado) fueron tomadas por el grupo.
 - Cada integrante preparó la explicación de las funciones de su parte para el coloquio.
- 
-8. Video de presentación
+---
+
+## 8. Video de presentación
 
 https://drive.google.com/file/d/15woC6IVU6hbNfhh5c8oZQDUHcD-3j-gp/view?usp=drive_link
  
